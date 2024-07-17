@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Scanner</title>
+    <title>Barcode and QR Code Scanner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script type="module">
+        import QrScanner from "https://cdn.jsdelivr.net/npm/qr-scanner/qr-scanner.min.js";
+        window.QrScanner = QrScanner; // make QrScanner available globally
+    </script>
     <style>
         #interactive.viewport {
             width: 100%;
@@ -15,18 +19,24 @@
     </style>
 </head>
 <body>
-    <input type="text" id="barcodeValue" placeholder="Barcode data appears here...">
+    <input type="text" id="barcodeValue" placeholder="Barcode or QR code data appears here...">
     <button onclick="startScanning();">Start Scanning</button>
     <button onclick="stopScanning();">Stop Scanning</button>
     <div id="interactive" class="viewport"></div>
 
     <script>
         var _scannerIsRunning = false;
+        var qrScanner;
 
         function startScanning() {
             if (_scannerIsRunning) {
                 return;
             }
+            startBarcodeScanner();
+            startQRScanner();
+        }
+
+        function startBarcodeScanner() {
             Quagga.init({
                 inputStream: {
                     name: "Live",
@@ -63,25 +73,40 @@
                 Quagga.start();
                 _scannerIsRunning = true;
             });
-            
+
             Quagga.onDetected(function (result) {
                 var code = result.codeResult.code;
                 document.getElementById('barcodeValue').value = code;
                 alert("Scanned Code: " + code);
-                // Simulate pressing the enter key
-                var event = new KeyboardEvent('keydown', {
-                    bubbles: true, cancelable: true, keyCode: 13
-                });
-                document.getElementById('barcodeValue').dispatchEvent(event);
-                Quagga.stop();
-                _scannerIsRunning = false;
+                stopScanning();
             });
+        }
+
+        function startQRScanner() {
+            const video = document.createElement('video');
+            document.getElementById('interactive').appendChild(video);
+            qrScanner = new QrScanner(video, result => {
+                document.getElementById('barcodeValue').value = result;
+                alert("Scanned QR Code: " + result);
+                stopScanning();
+            }, {
+                returnDetailedScanResult: true
+            });
+
+            qrScanner.start();
+            _scannerIsRunning = true;
         }
 
         function stopScanning() {
             if (_scannerIsRunning) {
                 Quagga.stop();
+                if (qrScanner) {
+                    qrScanner.stop();
+                    qrScanner.destroy();
+                    qrScanner = null;
+                }
                 _scannerIsRunning = false;
+                document.getElementById('interactive').innerHTML = '';
             }
         }
     </script>
