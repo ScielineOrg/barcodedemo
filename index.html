@@ -7,6 +7,9 @@
     <script type="module">
         import QrScanner from "https://cdn.jsdelivr.net/npm/qr-scanner/qr-scanner.min.js";
         window.QrScanner = QrScanner; // make QrScanner available globally
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('versionInfo').innerText = 'QR Scanner Version: ' + QrScanner.VERSION;
+        });
     </script>
     <style>
         #interactive.viewport {
@@ -19,13 +22,19 @@
             width: 100%;
             height: 100%;
         }
+        #versionInfo {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
-    <input type="text" id="barcodeValue" placeholder="1 - QR code data appears here...">
+    <input type="text" id="barcodeValue" placeholder="QR code data appears here...">
     <button onclick="startScanning();">Start Scanning</button>
     <button onclick="stopScanning();">Stop Scanning</button>
     <div id="interactive" class="viewport"></div>
+    <div id="versionInfo"></div>
 
     <script>
         var _scannerIsRunning = false;
@@ -39,13 +48,27 @@
             document.getElementById('interactive').appendChild(video);
 
             qrScanner = new QrScanner(video, result => {
-                document.getElementById('barcodeValue').value = result.data;
-                alert("Scanned QR Code: " + result.data);
-                stopScanning();
+                if (result && result.data) {
+                    document.getElementById('barcodeValue').value = result.data;
+                    alert("Scanned QR Code: " + result.data);
+                    stopScanning();
+                }
+            }, {
+                onDecodeError: error => {
+                    // Only log errors to console, no alerts for decode errors
+                    console.error('Error decoding QR code:', error);
+                },
+                highlightScanRegion: true,
+                highlightCodeOutline: true
             });
 
-            qrScanner.start();
-            _scannerIsRunning = true;
+            qrScanner.start().then(() => {
+                _scannerIsRunning = true;
+            }).catch(error => {
+                console.error('Error starting QR scanner:', error);
+                alert('Error starting QR scanner: ' + error);
+                stopScanning();
+            });
         }
 
         function stopScanning() {
