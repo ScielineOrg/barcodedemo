@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barcode and QR Code Scanner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <script type="module">
-        import QrScanner from "https://cdn.jsdelivr.net/npm/qr-scanner/qr-scanner.min.js";
-        window.QrScanner = QrScanner; // make QrScanner available globally
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/qr-scanner/qr-scanner.min.js"></script>
     <style>
         #interactive.viewport {
             width: 100%;
@@ -86,11 +83,9 @@
             const video = document.createElement('video');
             document.getElementById('interactive').appendChild(video);
             qrScanner = new QrScanner(video, result => {
-                document.getElementById('barcodeValue').value = result;
-                alert("Scanned QR Code: " + result);
+                document.getElementById('barcodeValue').value = result.data;
+                alert("Scanned QR Code: " + result.data);
                 stopScanning();
-            }, {
-                returnDetailedScanResult: true
             });
 
             qrScanner.start();
