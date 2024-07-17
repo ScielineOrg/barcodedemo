@@ -1,36 +1,89 @@
-Quagga.init({
-    inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: document.querySelector('#interactive'),
-        constraints: {
-            facingMode: "environment"
-        },
-    },
-    decoder: {
-        readers: [
-            "code_128_reader",
-            "ean_reader",
-            "ean_8_reader",
-            "code_39_reader",
-            "code_39_vin_reader",
-            "codabar_reader",
-            "upc_reader",
-            "upc_e_reader"
-        ],
-        debug: {
-            drawBoundingBox: true,
-            showFrequency: true,
-            drawScanline: true,
-            showPattern: true
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Scanner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <style>
+        #interactive.viewport {
+            width: 100%;
+            height: 300px;
+            border: 1px solid black;
+            margin-top: 10px;
         }
-    },
-}, function (err) {
-    if (err) {
-        console.error(err);
-        return;
-    }
-    console.log("Initialization finished. Ready to start");
-    Quagga.start();
-    _scannerIsRunning = true;
-});
+    </style>
+</head>
+<body>
+    <input type="text" id="barcodeValue" placeholder="Barcode data appears here...">
+    <button onclick="startScanning();">Start Scanning</button>
+    <button onclick="stopScanning();">Stop Scanning</button>
+    <div id="interactive" class="viewport"></div>
+
+    <script>
+        var _scannerIsRunning = false;
+
+        function startScanning() {
+            if (_scannerIsRunning) {
+                return;
+            }
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#interactive'),
+                    constraints: {
+                        facingMode: "environment"
+                    },
+                },
+                decoder: {
+                    readers: [
+                        "code_128_reader",
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_39_reader",
+                        "code_39_vin_reader",
+                        "codabar_reader",
+                        "upc_reader",
+                        "upc_e_reader"
+                    ],
+                    debug: {
+                        drawBoundingBox: true,
+                        showFrequency: true,
+                        drawScanline: true,
+                        showPattern: true
+                    }
+                },
+            }, function (err) {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+                console.log("Initialization finished. Ready to start");
+                Quagga.start();
+                _scannerIsRunning = true;
+            });
+            
+            Quagga.onDetected(function (result) {
+                var code = result.codeResult.code;
+                document.getElementById('barcodeValue').value = code;
+                alert("Scanned Code: " + code);
+                // Simulate pressing the enter key
+                var event = new KeyboardEvent('keydown', {
+                    bubbles: true, cancelable: true, keyCode: 13
+                });
+                document.getElementById('barcodeValue').dispatchEvent(event);
+                Quagga.stop();
+                _scannerIsRunning = false;
+            });
+        }
+
+        function stopScanning() {
+            if (_scannerIsRunning) {
+                Quagga.stop();
+                _scannerIsRunning = false;
+            }
+        }
+    </script>
+</body>
+</html>
